@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
 import 'package:shopping_list_app/screens/new_item_screen.dart';
-import 'package:shopping_list_app/utils/dummy_items.dart';
 
 class GroceryListScreen extends StatefulWidget {
   const GroceryListScreen({super.key});

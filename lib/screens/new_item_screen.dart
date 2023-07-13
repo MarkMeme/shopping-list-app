@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/models/category.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
@@ -15,17 +14,20 @@ class _NewItemScreenState extends State<NewItemScreen> {
   @override
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormState>();
+    // ignore: no_leading_underscores_for_local_identifiers
     var _enterdName = '';
+    // ignore: no_leading_underscores_for_local_identifiers
     var _enterdQunatity = 1;
+    // ignore: no_leading_underscores_for_local_identifiers
     var _selectedCategory = categories[Categories.vegetables]!;
 
     // ignore: no_leading_underscores_for_local_identifiers
     void _saveData() {
       if (formKey.currentState!.validate()) {
         formKey.currentState!.save();
-        print(_enterdQunatity);
-        print(_selectedCategory);
-        print(_enterdName);
+        // print(_enterdQunatity);
+        // print(_selectedCategory);
+        // print(_enterdName);
         Navigator.of(context).pop(GroceryItem(
             category: _selectedCategory,
             id: DateTime.now().toString(),
@@ -124,11 +126,12 @@ class _NewItemScreenState extends State<NewItemScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  TextButton(onPressed: _resetData, child: Text('Reset')),
+                  TextButton(onPressed: _resetData, child: const Text('Reset')),
                   const SizedBox(
                     width: 8,
                   ),
-                  ElevatedButton(onPressed: _saveData, child: Text('  Add  '))
+                  ElevatedButton(
+                      onPressed: _saveData, child: const Text('  Add  '))
                 ],
               )
             ],
