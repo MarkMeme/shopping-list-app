@@ -1,6 +1,9 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:shopping_list_app/models/grocery_item.dart';
 import 'package:shopping_list_app/screens/new_item_screen.dart';
+import 'package:shopping_list_app/utils/categories.dart';
 
 class GroceryListScreen extends StatefulWidget {
   const GroceryListScreen({super.key});
@@ -10,24 +13,84 @@ class GroceryListScreen extends StatefulWidget {
 }
 
 class _GroceryListScreenState extends State<GroceryListScreen> {
-  final List<GroceryItem> _groceryItems = [];
-  void _addItemNavigatation() async {
-    final newItem = await Navigator.of(context).push<GroceryItem>(
-        MaterialPageRoute(builder: (context) => const NewItemScreen()));
+  List<GroceryItem> _groceryItems = [];
+  var _isloading = true;
+  String? _error;
+  void _loadItems() async {
+    final url = Uri.https(
+        'shopping-app-acb15-default-rtdb.firebaseio.', 'shopping-list.json');
+    try {
+      final response = await http.get(url);
 
-    if (newItem == null) {
-      return;
+      if (response.body == 'null') {
+        setState(() {
+          _isloading = false;
+        });
+        return;
+      }
+      final Map<String, dynamic> listData = json.decode(response.body);
+      final List<GroceryItem> loadedItems = [];
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = 'Something wnet Wrong...';
+        });
+      }
+      for (final item in listData.entries) {
+        final category = categories.entries
+            .firstWhere(
+                (catItem) => catItem.value.title == item.value['category'])
+            .value;
+        loadedItems.add(
+          GroceryItem(
+            id: item.key,
+            name: item.value['name'],
+            quantity: item.value['quantity'],
+            category: category,
+          ),
+        );
+      }
+      setState(() {
+        _groceryItems = loadedItems;
+        _isloading = false;
+      });
+    } catch (error) {
+      setState(() {
+        _isloading = false;
+      });
+      _error = "Something wnet Wrong...";
     }
-
-    setState(() {
-      _groceryItems.add(newItem);
-    });
   }
 
-  void _removeItem(GroceryItem item) {
+  void _addItemNavigatation() async {
+    final result = await Navigator.of(context).push<GroceryItem>(
+        MaterialPageRoute(builder: (context) => const NewItemScreen()));
+    _loadItems();
+    if (result == null) {
+      return;
+    }
+    // _groceryItems.add(result);
+  }
+
+  void _removeItem(GroceryItem item) async {
+    final index = _groceryItems.indexOf(item);
     setState(() {
       _groceryItems.remove(item);
     });
+
+    final url = Uri.https('shopping-app-acb15-default-rtdb.firebaseio.com',
+        'shopping-list/${item.id}.json');
+    final response = await http.delete(url);
+    if (response.statusCode >= 400) {
+      setState(() {
+        _groceryItems.insert(index, item);
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    _loadItems();
+    super.initState();
   }
 
   @override
@@ -40,7 +103,17 @@ class _GroceryListScreenState extends State<GroceryListScreen> {
           .titleLarge!
           .copyWith(color: Theme.of(context).colorScheme.primary),
     ));
-
+    if (_isloading) {
+      content = Center(
+        child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.onBackground),
+      );
+    }
+    if (_error != null) {
+      content = Center(
+        child: Text(_error!),
+      );
+    }
     if (_groceryItems.isNotEmpty) {
       content = ListView.builder(
           itemCount: _groceryItems.length,
